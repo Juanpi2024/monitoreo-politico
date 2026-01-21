@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Civic Watchdog - Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-primary: #0f1419;
+      --bg-secondary: #1a1f2e;
+      --bg-card: #232b3b;
+      --bg-hover: #2d3748;
+      --text-primary: #ffffff;
+      --text-secondary: #8b98a5;
+      --accent-blue: #1d9bf0;
+      --accent-green: #00ba7c;
+      --accent-yellow: #f7b928;
+      --accent-red: #f4212e;
+      --accent-purple: #7c3aed;
+      --border-color: #2f3b4e;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--bg-secondary), #1e293b);
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .logo i {
+      color: var(--accent-blue);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1a8cd8;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-hover);
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 1200px) {
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 1.25rem;
+      border: 1px solid var(--border-color);
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.75rem;
+      font-size: 1.2rem;
+    }
+
+    .stat-icon.blue {
+      background: rgba(29, 155, 240, 0.15);
+      color: var(--accent-blue);
+    }
+
+    .stat-icon.red {
+      background: rgba(244, 33, 46, 0.15);
+      color: var(--accent-red);
+    }
+
+    .stat-icon.yellow {
+      background: rgba(247, 185, 40, 0.15);
+      color: var(--accent-yellow);
+    }
+
+    .stat-icon.green {
+      background: rgba(0, 186, 124, 0.15);
+      color: var(--accent-green);
+    }
+
+    .stat-icon.purple {
+      background: rgba(124, 58, 237, 0.15);
+      color: var(--accent-purple);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+    }
+
+    /* Search Bar */
+    .search-container {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 250px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(29, 155, 240, 0.2);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    select {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      min-width: 150px;
+    }
+
+    /* Main Layout */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Party Stats Panel */
+    .panel {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-header i {
+      color: var(--accent-blue);
+    }
+
+    .panel-body {
+      padding: 0.75rem;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .party-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-bottom: 0.5rem;
+    }
+
+    .party-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .party-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.75rem;
+      margin-right: 0.75rem;
+    }
+
+    .party-info {
+      flex: 1;
+    }
+
+    .party-name {
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .party-stats {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .party-bar {
+      width: 60px;
+      height: 6px;
+      background: var(--bg-card);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .party-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    /* Diputados Grid */
+    .diputados-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .diputado-card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .diputado-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border-color: var(--accent-blue);
+    }
+
+    .diputado-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .diputado-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-right: 1rem;
+    }
+
+    .diputado-name {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .diputado-partido {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .diputado-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .metric {
+      text-align: center;
+      padding: 0.5rem;
+      background: var(--bg-primary);
+      border-radius: 8px;
+    }
+
+    .metric-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .metric-label {
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .diputado-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .tag {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+
+    .tag.alert-high {
+      background: rgba(244, 33, 46, 0.2);
+      color: var(--accent-red);
+    }
+
+    .tag.alert-medium {
+      background: rgba(247, 185, 40, 0.2);
+      color: var(--accent-yellow);
+    }
+
+    .tag.alert-low {
+      background: rgba(0, 186, 124, 0.2);
+      color: var(--accent-green);
+    }
+
+    /* Modal Perfil */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+    }
+
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: sticky;
+      top: 0;
+      background: var(--bg-secondary);
+      z-index: 1;
+    }
+
+    .modal-close {
+      background: var(--bg-card);
+      border: none;
+      color: var(--text-secondary);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .profile-info h2 {
+      margin-bottom: 0.25rem;
+    }
+
+    .profile-info .partido {
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .profile-badges {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .profile-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    @media (max-width: 600px) {
+      .profile-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .profile-stat {
+      background: var(--bg-card);
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .profile-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .profile-stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 1.5rem 0 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-title i {
+      color: var(--accent-blue);
+    }
+
+    .votaciones-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .votacion-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem;
+      background: var(--bg-card);
+      border-radius: 8px;
+    }
+
+    .votacion-categoria {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .votacion-info {
+      flex: 1;
+    }
+
+    .votacion-titulo {
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .votacion-boletin {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+
+    .votacion-voto {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .votacion-voto.afirmativo {
+      background: rgba(0, 186, 124, 0.2);
+      color: var(--accent-green);
+    }
+
+    .votacion-voto.negativo {
+      background: rgba(244, 33, 46, 0.2);
+      color: var(--accent-red);
+    }
+
+    .votacion-voto.abstencion {
+      background: rgba(247, 185, 40, 0.2);
+      color: var(--accent-yellow);
+    }
+
+    .inconsistencias-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .inconsistencia-item {
+      padding: 0.75rem;
+      background: rgba(244, 33, 46, 0.1);
+      border-left: 3px solid var(--accent-red);
+      border-radius: 0 8px 8px 0;
+      font-size: 0.85rem;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="header">
+    <div class="logo"><i class="fas fa-search"></i> Civic Watchdog</div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" onclick="cargarDatos()"><i class="fas fa-sync-alt"></i> Actualizar</button>
+      <button class="btn btn-primary" onclick="ejecutarAnalisis()"><i class="fas fa-play"></i> Analizar</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+        <div class="stat-value" id="totalDiputados">--</div>
+        <div class="stat-label">Diputados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-vote-yea"></i></div>
+        <div class="stat-value" id="totalVotaciones">--</div>
+        <div class="stat-label">Votaciones Registradas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-value" id="alertasAltas">--</div>
+        <div class="stat-label">Alertas Altas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon yellow"><i class="fas fa-bolt"></i></div>
+        <div class="stat-value" id="contradicciones">--</div>
+        <div class="stat-label">Contradicciones</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-value" id="promedioAsistencia">--</div>
+        <div class="stat-label">Asistencia Promedio</div>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-container">
+      <i class="fas fa-search" style="color: var(--text-secondary);"></i>
+      <input type="text" class="search-input" id="searchInput" placeholder="Buscar diputado por nombre..."
+        oninput="filtrarDiputados()">
+      <select id="filtroPartido" onchange="filtrarDiputados()">
+        <option value="">Todos los partidos</option>
+      </select>
+      <select id="filtroCategoria" onchange="filtrarPorCategoria()">
+        <option value="">Todas las categorías</option>
+        <option value="pensiones">💰 Pensiones</option>
+        <option value="presupuesto">📊 Presupuesto</option>
+        <option value="salud">🏥 Salud</option>
+        <option value="seguridad">👮 Seguridad</option>
+        <option value="educacion">📚 Educación</option>
+        <option value="trabajo">💼 Trabajo</option>
+      </select>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+      <!-- Panel Partidos -->
+      <div class="panel">
+        <div class="panel-header"><i class="fas fa-building-columns"></i> Votaciones por Partido</div>
+        <div class="panel-body" id="partidosPanel">
+          <div class="loading">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid Diputados -->
+      <div>
+        <div class="diputados-grid" id="diputadosGrid">
+          <div class="loading" style="grid-column: 1/-1;">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Perfil -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="profile-header" id="profileHeader"></div>
+        <button class="modal-close" onclick="cerrarModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="profileBody"></div>
+    </div>
+  </div>
+
+  <script>
+    let datosCache = { diputados: [], partidos: [], votaciones: [], stats: {} };
+    const CATEGORIA_ICONS = { pensiones: '💰', presupuesto: '📊', salud: '🏥', seguridad: '👮', educacion: '📚', trabajo: '💼' };
+    const CATEGORIA_COLORS = { pensiones: '#f59e0b', presupuesto: '#3b82f6', salud: '#ef4444', seguridad: '#8b5cf6', educacion: '#10b981', trabajo: '#6366f1' };
+
+    document.addEventListener('DOMContentLoaded', cargarDatos);
+
+    function cargarDatos() {
+      // Stats generales
+      google.script.run.withSuccessHandler(stats => {
+        datosCache.stats = stats;
+        document.getElementById('totalDiputados').textContent = stats.totalDiputados || '--';
+        document.getElementById('alertasAltas').textContent = stats.alertasAltas || 0;
+        document.getElementById('contradicciones').textContent = stats.contradicciones || 0;
+      }).getEstadisticasGenerales();
+
+      // Votaciones por partido
+      google.script.run.withSuccessHandler(data => {
+        datosCache.partidos = data.porPartido || [];
+        document.getElementById('totalVotaciones').textContent = data.totalVotos || 0;
+        renderPartidos(datosCache.partidos);
+        poblarFiltroPartidos(datosCache.partidos);
+      }).getEstadisticasVotaciones('todos');
+
+      // Diputados con datos completos
+      google.script.run.withSuccessHandler(dips => {
+        datosCache.diputados = dips;
+        renderDiputados(dips);
+        calcularPromedioAsistencia(dips);
+      }).getDiputadosCompletos();
+    }
+
+    function calcularPromedioAsistencia(dips) {
+      if (!dips || dips.length === 0) {
+        document.getElementById('promedioAsistencia').textContent = '--';
+        return;
+      }
+      const total = dips.reduce((sum, d) => sum + (d.asistencia || 0), 0);
+      const promedio = Math.round(total / dips.length);
+      document.getElementById('promedioAsistencia').textContent = promedio + '%';
+    }
+
+    function renderPartidos(partidos) {
+      if (!partidos || partidos.length === 0) {
+        document.getElementById('partidosPanel').innerHTML = '<div class="empty-state"><i class="fas fa-chart-pie"></i><p>Sin datos de votaciones</p></div>';
+        return;
+      }
+      const colors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
+      const html = partidos.map((p, i) => {
+        const color = colors[i % colors.length];
+        const barWidth = Math.min(100, p.pctAFavor || 0);
+        return `
+          <div class="party-item" onclick="filtrarPorPartido('${p.partido}')">
+            <div class="party-badge" style="background: ${color}20; color: ${color};">${p.partido.substring(0, 3)}</div>
+            <div class="party-info">
+              <div class="party-name">${p.partido}</div>
+              <div class="party-stats">${p.aFavor || 0} a favor / ${p.enContra || 0} en contra</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 600; color: ${color};">${p.pctAFavor || 0}%</div>
+              <div class="party-bar"><div class="party-bar-fill" style="width: ${barWidth}%; background: ${color};"></div></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('partidosPanel').innerHTML = html;
+    }
+
+    function poblarFiltroPartidos(partidos) {
+      const select = document.getElementById('filtroPartido');
+      select.innerHTML = '<option value="">Todos los partidos</option>';
+      partidos.forEach(p => {
+        select.innerHTML += `<option value="${p.partido}">${p.partido}</option>`;
+      });
+    }
+
+    function renderDiputados(dips) {
+      if (!dips || dips.length === 0) {
+        document.getElementById('diputadosGrid').innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-user-slash"></i><p>No hay diputados para mostrar</p></div>';
+        return;
+      }
+      const html = dips.slice(0, 50).map(d => {
+        const initials = d.nombre.split(' ').slice(0, 2).map(n => n[0]).join('');
+        const alertClass = d.alerta >= 7 ? 'alert-high' : d.alerta >= 4 ? 'alert-medium' : 'alert-low';
+        const alertText = d.alerta >= 7 ? 'Alerta Alta' : d.alerta >= 4 ? 'Alerta Media' : 'Sin Alertas';
+        return `
+          <div class="diputado-card" onclick='verPerfil(${JSON.stringify(d).replace(/'/g, "&#39;")})'>
+            <div class="diputado-header">
+              <div class="diputado-avatar">${initials}</div>
+              <div>
+                <div class="diputado-name">${d.nombre}</div>
+                <div class="diputado-partido">${d.partido || 'Sin partido'}</div>
+              </div>
+            </div>
+            <div class="diputado-metrics">
+              <div class="metric">
+                <div class="metric-value" style="color: ${d.alerta >= 7 ? 'var(--accent-red)' : d.alerta >= 4 ? 'var(--accent-yellow)' : 'var(--accent-green)'};">${d.alerta || 0}</div>
+                <div class="metric-label">Alerta</div>
+              </div>
+              <div class="metric">
+                <div class="metric-value">${d.votaciones || 0}</div>
+                <div class="metric-label">Votos</div>
+              </div>
+              <div class="metric">
+                <div class="metric-value">${d.asistencia || 0}%</div>
+                <div class="metric-label">Asistencia</div>
+              </div>
+            </div>
+            <div class="diputado-tags">
+              <span class="tag ${alertClass}">${alertText}</span>
+              ${d.contradicciones > 0 ? `<span class="tag alert-high">${d.contradicciones} inconsistencias</span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('diputadosGrid').innerHTML = html;
+    }
+
+    function filtrarDiputados() {
+      const busqueda = document.getElementById('searchInput').value.toLowerCase();
+      const partido = document.getElementById('filtroPartido').value;
+
+      const filtrados = datosCache.diputados.filter(d => {
+        if (busqueda && !d.nombre.toLowerCase().includes(busqueda)) return false;
+        if (partido && d.partido !== partido) return false;
+        return true;
+      });
+      renderDiputados(filtrados);
+    }
+
+    function filtrarPorPartido(partido) {
+      document.getElementById('filtroPartido').value = partido;
+      filtrarDiputados();
+    }
+
+    function filtrarPorCategoria() {
+      const cat = document.getElementById('filtroCategoria').value;
+      if (cat) {
+        google.script.run.withSuccessHandler(data => {
+          datosCache.partidos = data.porPartido || [];
+          renderPartidos(datosCache.partidos);
+        }).getEstadisticasVotaciones(cat);
+      } else {
+        google.script.run.withSuccessHandler(data => {
+          datosCache.partidos = data.porPartido || [];
+          renderPartidos(datosCache.partidos);
+        }).getEstadisticasVotaciones('todos');
+      }
+    }
+
+    function verPerfil(d) {
+      // Header
+      document.getElementById('profileHeader').innerHTML = `
+        <div class="profile-avatar">${d.nombre.split(' ').slice(0, 2).map(n => n[0]).join('')}</div>
+        <div class="profile-info">
+          <h2>${d.nombre}</h2>
+          <div class="partido">${d.partido || 'Sin partido'}</div>
+          <div class="profile-badges">
+            <span class="tag ${d.alerta >= 7 ? 'alert-high' : d.alerta >= 4 ? 'alert-medium' : 'alert-low'}">
+              Alerta: ${d.alerta || 0}/10
+            </span>
+            <span class="tag" style="background: rgba(29,155,240,0.2); color: var(--accent-blue);">
+              ${d.sentimiento || 'neutral'}
+            </span>
+          </div>
+        </div>
+      `;
+
+      // Body
+      let bodyHtml = `
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <div class="profile-stat-value" style="color: ${d.alerta >= 7 ? 'var(--accent-red)' : 'var(--accent-green)'};">${d.alerta || 0}</div>
+            <div class="profile-stat-label">Nivel Alerta</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-value">${d.votaciones || 0}</div>
+            <div class="profile-stat-label">Votaciones</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-value">${d.asistencia || 0}%</div>
+            <div class="profile-stat-label">Asistencia</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-value">${d.contradicciones || 0}</div>
+            <div class="profile-stat-label">Inconsistencias</div>
+          </div>
+        </div>
+      `;
+
+      // Información de contacto y redes
+      const redes = d.redes || {};
+      bodyHtml += `
+        <div class="section-title"><i class="fas fa-address-card"></i> Información de Contacto</div>
+        <div style="background: var(--bg-card); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+          <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+            <div style="flex: 1; min-width: 200px;">
+              <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 0.25rem;">Distrito</div>
+              <div style="font-weight: 500;">Distrito ${d.distrito || 'N/A'}</div>
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+              <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 0.25rem;">Correo Institucional</div>
+              <a href="mailto:${d.correo || ''}" style="color: var(--accent-blue); text-decoration: none; word-break: break-all;">${d.correo || 'No disponible'}</a>
+            </div>
+          </div>
+          <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 0.5rem;">Enfoque Digital</div>
+          <div style="font-size: 0.85rem; margin-bottom: 1rem;">${d.enfoqueDigital || 'No especificado'}</div>
+          
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            ${redes.twitter ? `<a href="${redes.twitter}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #1d9bf020; color: #1d9bf0; border-radius: 8px; text-decoration: none; font-size: 0.85rem;"><i class="fab fa-twitter"></i> Twitter</a>` : ''}
+            ${redes.instagram ? `<a href="${redes.instagram}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #E1306C20; color: #E1306C; border-radius: 8px; text-decoration: none; font-size: 0.85rem;"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
+            ${redes.facebook ? `<a href="${redes.facebook}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #1877F220; color: #1877F2; border-radius: 8px; text-decoration: none; font-size: 0.85rem;"><i class="fab fa-facebook"></i> Facebook</a>` : ''}
+            ${redes.tiktok ? `<a href="${redes.tiktok}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #00000020; color: #fff; border-radius: 8px; text-decoration: none; font-size: 0.85rem;"><i class="fab fa-tiktok"></i> TikTok</a>` : ''}
+            ${redes.youtube ? `<a href="${redes.youtube}" target="_blank" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: #FF000020; color: #FF0000; border-radius: 8px; text-decoration: none; font-size: 0.85rem;"><i class="fab fa-youtube"></i> YouTube</a>` : ''}
+          </div>
+        </div>
+      `;
+
+      // Resumen
+      if (d.resumen) {
+        bodyHtml += `
+          <div class="section-title"><i class="fas fa-file-alt"></i> Resumen del Análisis</div>
+          <div style="background: var(--bg-card); padding: 1rem; border-radius: 8px; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+            ${d.resumen}
+          </div>
+        `;
+      }
+
+      // Votaciones
+      if (d.votacionesDetalle && d.votacionesDetalle.length > 0) {
+        bodyHtml += `<div class="section-title"><i class="fas fa-vote-yea"></i> Historial de Votaciones</div><div class="votaciones-list">`;
+        d.votacionesDetalle.forEach(v => {
+          const cat = v.categoria || 'general';
+          const icon = CATEGORIA_ICONS[cat] || '📋';
+          const color = CATEGORIA_COLORS[cat] || '#6b7280';
+          const votoClass = v.voto.toLowerCase().includes('afirmativo') ? 'afirmativo' : v.voto.toLowerCase().includes('negativo') ? 'negativo' : 'abstencion';
+          bodyHtml += `
+            <div class="votacion-item">
+              <div class="votacion-categoria" style="background: ${color}20; color: ${color};">${icon}</div>
+              <div class="votacion-info">
+                <div class="votacion-titulo">${v.titulo}</div>
+                <div class="votacion-boletin">Boletín: ${v.boletin}</div>
+              </div>
+              <span class="votacion-voto ${votoClass}">${v.voto}</span>
+            </div>
+          `;
+        });
+        bodyHtml += '</div>';
+      }
+
+      // Contradicciones
+      if (d.contradiccionesDetalle && d.contradiccionesDetalle.length > 0) {
+        bodyHtml += `<div class="section-title"><i class="fas fa-exclamation-circle"></i> Inconsistencias Detectadas</div><div class="inconsistencias-list">`;
+        d.contradiccionesDetalle.forEach(c => {
+          bodyHtml += `<div class="inconsistencia-item">${c}</div>`;
+        });
+        bodyHtml += '</div>';
+      }
+
+      document.getElementById('profileBody').innerHTML = bodyHtml;
+      document.getElementById('modal').classList.add('active');
+    }
+
+    function cerrarModal() { document.getElementById('modal').classList.remove('active'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+    document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') cerrarModal(); });
+
+    function ejecutarAnalisis() {
+      if (confirm('¿Ejecutar análisis? Esto puede tomar 1-2 minutos.')) {
+        alert('⏳ Análisis iniciado...');
+        google.script.run.withSuccessHandler(r => {
+          alert('✅ ' + r.ok + '/' + r.total + ' analizados');
+          cargarDatos();
+        }).withFailureHandler(e => alert('❌ ' + e)).runCivicWatchdogWeb();
+      }
+    }
+  </script>
+
+</body>
+
+</html>
