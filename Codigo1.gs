@@ -57,14 +57,44 @@ function doGet(e) {
 }
 
 function handleAPI(e) {
-  var action = e.parameter.action;
+  var action = e.parameter.action || '';
   var result = {};
+  
   switch(action) {
-    case 'stats': result = getEstadisticasGenerales(); break;
-    case 'diputados': result = getDiputadosConAlertas(); break;
-    case 'partidos': result = getEstadisticasPorPartido(); break;
-    default: result = { error: 'Accion no valida' };
+    case 'stats':
+    case 'estadisticas':
+      result = getEstadisticasGenerales();
+      break;
+    case 'diputados':
+      result = getDiputadosCompletos();
+      break;
+    case 'alertas':
+      var diputados = getDiputadosCompletos();
+      result = diputados.filter(function(d) { return d.alerta >= 5; }).slice(0, 10);
+      break;
+    case 'partidos':
+    case 'estadisticasPartido':
+      result = getEstadisticasPorPartidoCompleto();
+      break;
+    case 'diputadoDetalle':
+      var id = e.parameter.id;
+      var todos = getDiputadosCompletos();
+      result = todos.find(function(d) { return d.dipId === id; }) || null;
+      break;
+    case 'proyectos':
+    case 'proyectosLey':
+      result = getProyectosLey(false);
+      break;
+    case 'proximasVotaciones':
+      result = getProximasVotaciones();
+      break;
+    case 'datosElectorales':
+      result = getEstadisticasElectorales();
+      break;
+    default:
+      result = { error: 'Accion no valida', acciones: ['estadisticas', 'diputados', 'alertas', 'partidos', 'diputadoDetalle', 'proyectosLey', 'proximasVotaciones', 'datosElectorales'] };
   }
+  
   return ContentService.createTextOutput(JSON.stringify(result))
     .setMimeType(ContentService.MimeType.JSON);
 }
@@ -75,6 +105,9 @@ function onOpen() {
     .addItem('Crear Estructura', 'setupCivicWatchdog')
     .addItem('Importar Diputados API', 'importarDiputadosAPI')
     .addSeparator()
+    .addSubMenu(ui.createMenu('📋 Seguimiento Legislativo')
+      .addItem('Actualizar Proyectos', 'actualizarProyectosLey')
+      .addItem('Ver Próximas Votaciones', 'verProximasVotaciones'))
     .addSubMenu(ui.createMenu('Importar Votaciones')
       .addItem('Pensiones', 'importarVotacionesPensiones')
       .addItem('Presupuesto', 'importarVotacionesPresupuesto')
@@ -311,4 +344,49 @@ function getDiputadosCompletos() {
     Logger.log('Error getDiputadosCompletos: ' + e);
     return [];
   }
+}
+
+// Colores por partido para el frontend
+var PARTY_COLORS = {
+  'RN': '#1e40af', 'UDI': '#1e3a5f', 'PS': '#dc2626', 'PPD': '#f59e0b', 
+  'PC': '#b91c1c', 'DC': '#16a34a', 'REP': '#0d47a1', 'EVOP': '#0891b2', 
+  'FA': '#7c3aed', 'IND': '#6b7280', 'RD': '#ec4899', 'CS': '#0ea5e9',
+  'PL': '#fbbf24', 'FRVS': '#84cc16', 'PDG': '#f97316', 'PRSD': '#ef4444'
+};
+
+function getEstadisticasPorPartidoCompleto() {
+  try {
+    var diputados = getDiputadosCompletos();
+    var porPartido = {};
+    
+    diputados.forEach(function(d) {
+      var p = d.partido || 'IND';
+      if (!porPartido[p]) {
+        porPartido[p] = { sigla: p, nombre: getNombrePartido(p), color: PARTY_COLORS[p] || '#6b7280', count: 0, alertas: [], asistencias: [] };
+      }
+      porPartido[p].count++;
+      porPartido[p].alertas.push(d.alerta || 0);
+      porPartido[p].asistencias.push(d.asistencia || 0);
+    });
+    
+    return Object.values(porPartido).map(function(p) {
+      var avgAlerta = p.alertas.length > 0 ? p.alertas.reduce(function(a, b) { return a + b; }, 0) / p.alertas.length : 0;
+      var avgAsistencia = p.asistencias.length > 0 ? p.asistencias.reduce(function(a, b) { return a + b; }, 0) / p.asistencias.length : 0;
+      return { sigla: p.sigla, nombre: p.nombre, color: p.color, count: p.count, alertaPromedio: Math.round(avgAlerta * 10) / 10, asistenciaPromedio: Math.round(avgAsistencia) };
+    }).sort(function(a, b) { return b.count - a.count; });
+  } catch (e) {
+    Logger.log('Error getEstadisticasPorPartidoCompleto: ' + e);
+    return [];
+  }
+}
+
+function getNombrePartido(sigla) {
+  var nombres = {
+    'RN': 'Renovación Nacional', 'UDI': 'Unión Demócrata Independiente', 'PS': 'Partido Socialista',
+    'PPD': 'Partido Por la Democracia', 'PC': 'Partido Comunista', 'DC': 'Democracia Cristiana',
+    'REP': 'Republicanos', 'EVOP': 'Evópoli', 'FA': 'Frente Amplio', 'IND': 'Independiente',
+    'RD': 'Revolución Democrática', 'CS': 'Convergencia Social', 'PL': 'Partido Liberal',
+    'FRVS': 'Fed. Regionalista Verde Social', 'PDG': 'Partido de la Gente', 'PRSD': 'Partido Radical'
+  };
+  return nombres[sigla] || sigla;
 }

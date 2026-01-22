@@ -598,3 +598,429 @@ function crearActivadorDiario() {
   ScriptApp.newTrigger('runCivicWatchdog').timeBased().everyDays(1).atHour(8).create();
   SpreadsheetApp.getUi().alert('Activador diario 8:00 AM creado');
 }
+
+// ============================================
+// SEGUIMIENTO LEGISLATIVO - TRANSPARENTES.CL
+// ============================================
+
+var TRANSPARENTES_URL = 'https://transparentes.cl/seguimiento-legislativo.html';
+
+/**
+ * Extrae proyectos de ley desde Transparentes.cl
+ */
+function scrapeTransparentes() {
+  try {
+    var response = UrlFetchApp.fetch(TRANSPARENTES_URL, {
+      muteHttpExceptions: true,
+      followRedirects: true,
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+    });
+    
+    if (response.getResponseCode() !== 200) {
+      Logger.log('Error accediendo a Transparentes: ' + response.getResponseCode());
+      return { error: 'No se pudo acceder al sitio', proyectos: [] };
+    }
+    
+    var html = response.getContentText();
+    var proyectos = [];
+    
+    // Extraer boletines (pattern: Nº XXXXX-XX)
+    var boletinPattern = /Nº\s*(\d{4,6}-\d{1,2})/gi;
+    var boletines = [];
+    var match;
+    while ((match = boletinPattern.exec(html)) !== null) {
+      if (boletines.indexOf(match[1]) < 0) boletines.push(match[1]);
+    }
+    
+    // Extraer proyectos del HTML
+    // Buscar bloques de proyectos
+    var projectPattern = /Proyecto[^<]*ley[^<]*que[^<]+([^<]+)/gi;
+    var proyectoTextos = [];
+    while ((match = projectPattern.exec(html)) !== null) {
+      var texto = match[0].replace(/<[^>]+>/g, '').trim();
+      if (texto.length > 30 && proyectoTextos.length < 20) {
+        proyectoTextos.push(texto);
+      }
+    }
+    
+    // Asignar niveles de prioridad basados en palabras clave
+    var keywords = {
+      alto: ['votación', 'tabla', 'urgencia', 'plazo', 'indicaciones'],
+      medio: ['discusión', 'audiencias', 'comisión'],
+      bajo: ['ingresado', 'primer trámite', 'espera']
+    };
+    
+    for (var i = 0; i < Math.min(boletines.length, 15); i++) {
+      var titulo = proyectoTextos[i] || 'Proyecto de Ley';
+      titulo = titulo.substring(0, 200);
+      
+      // Determinar prioridad
+      var prioridad = 'bajo';
+      var textoLower = titulo.toLowerCase();
+      if (keywords.alto.some(function(k) { return textoLower.indexOf(k) >= 0; })) prioridad = 'alto';
+      else if (keywords.medio.some(function(k) { return textoLower.indexOf(k) >= 0; })) prioridad = 'medio';
+      
+      // Categorizar tema
+      var tema = categorizarProyecto(titulo);
+      
+      proyectos.push({
+        boletin: boletines[i],
+        titulo: titulo,
+        tema: tema,
+        prioridad: prioridad,
+        impactoCiudadania: determinarImpacto(titulo, 'ciudadania'),
+        impactoSociedadCivil: determinarImpacto(titulo, 'sociedad'),
+        url: 'https://www.camara.cl/legislacion/ProyectosDeLey/tramitacion.aspx?prmID=' + boletines[i].split('-')[0],
+        fuente: 'transparentes.cl',
+        fechaExtraccion: new Date().toISOString()
+      });
+    }
+    
+    return { proyectos: proyectos, total: proyectos.length };
+    
+  } catch (e) {
+    Logger.log('Error scrapeTransparentes: ' + e);
+    return { error: e.toString(), proyectos: [] };
+  }
+}
+
+/**
+ * Categoriza proyecto según palabras clave
+ */
+function categorizarProyecto(titulo) {
+  var lower = titulo.toLowerCase();
+  var categorias = {
+    'Transparencia': ['transparencia', 'información pública', 'acceso', 'lobby'],
+    'Participación': ['participación', 'ciudadana', 'vecinos', 'juntas', 'organizaciones'],
+    'Derechos': ['derechos', 'defensoras', 'protección', 'discapacidad'],
+    'Electoral': ['electoral', 'votaciones', 'sufragar', 'política'],
+    'Institucional': ['congreso', 'servicio', 'funcionarios', 'regulación'],
+    'Justicia': ['justicia', 'defensoría', 'víctimas'],
+    'Niñez': ['niñez', 'adolescencia', 'niños'],
+    'Gobierno': ['gobernadores', 'regional', 'royalty']
+  };
+  
+  for (var cat in categorias) {
+    if (categorias[cat].some(function(kw) { return lower.indexOf(kw) >= 0; })) {
+      return cat;
+    }
+  }
+  return 'General';
+}
+
+/**
+ * Determina nivel de impacto
+ */
+function determinarImpacto(titulo, tipo) {
+  var lower = titulo.toLowerCase();
+  var altoPrioridad = ['derechos fundamentales', 'participación ciudadana', 'transparencia', 
+                       'acceso a la información', 'libertad', 'democracia'];
+  var mediaPrioridad = ['organizaciones', 'regulación', 'servicio', 'proceso'];
+  
+  if (altoPrioridad.some(function(k) { return lower.indexOf(k) >= 0; })) return 'alto';
+  if (mediaPrioridad.some(function(k) { return lower.indexOf(k) >= 0; })) return 'medio';
+  return 'bajo';
+}
+
+/**
+ * Guarda proyectos en hoja de cálculo
+ */
+function guardarProyectosLey(proyectos) {
+  if (!proyectos || proyectos.length === 0) return 0;
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Proyectos_Ley');
+  
+  if (!sheet) {
+    sheet = ss.insertSheet('Proyectos_Ley');
+    var headers = ['Fecha', 'Boletín', 'Título', 'Tema', 'Prioridad', 'Impacto Ciudadanía', 'Impacto OSC', 'URL'];
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange(1, 1, 1, headers.length).setBackground('#7c3aed').setFontColor('#fff').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  
+  var nuevos = 0;
+  var existentes = [];
+  
+  // Obtener boletines existentes
+  if (sheet.getLastRow() > 1) {
+    existentes = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1).getValues().flat();
+  }
+  
+  proyectos.forEach(function(p) {
+    if (existentes.indexOf(p.boletin) < 0) {
+      sheet.appendRow([
+        new Date(),
+        p.boletin,
+        p.titulo,
+        p.tema,
+        p.prioridad,
+        p.impactoCiudadania,
+        p.impactoSociedadCivil,
+        p.url
+      ]);
+      nuevos++;
+    }
+  });
+  
+  return nuevos;
+}
+
+/**
+ * Obtiene proyectos de la hoja o scrape si no hay datos recientes
+ */
+function getProyectosLey(forceRefresh) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Proyectos_Ley');
+  
+  // Verificar si hay datos recientes (últimas 24 horas)
+  var needsRefresh = forceRefresh || false;
+  if (!sheet || sheet.getLastRow() <= 1) {
+    needsRefresh = true;
+  } else {
+    var lastDate = sheet.getRange(sheet.getLastRow(), 1).getValue();
+    if (lastDate && (new Date() - new Date(lastDate)) > 24 * 60 * 60 * 1000) {
+      needsRefresh = true;
+    }
+  }
+  
+  // Hacer scraping si necesario
+  if (needsRefresh) {
+    var scrapeResult = scrapeTransparentes();
+    if (scrapeResult.proyectos.length > 0) {
+      guardarProyectosLey(scrapeResult.proyectos);
+    }
+  }
+  
+  // Leer datos de la hoja
+  sheet = ss.getSheetByName('Proyectos_Ley');
+  if (!sheet || sheet.getLastRow() <= 1) {
+    return [];
+  }
+  
+  var data = sheet.getDataRange().getValues();
+  data.shift(); // Remover headers
+  
+  return data.map(function(row) {
+    return {
+      fecha: row[0],
+      boletin: row[1],
+      titulo: row[2],
+      tema: row[3],
+      prioridad: row[4],
+      impactoCiudadania: row[5],
+      impactoSociedadCivil: row[6],
+      url: row[7]
+    };
+  }).sort(function(a, b) {
+    // Ordenar por prioridad: alto > medio > bajo
+    var orden = { alto: 3, medio: 2, bajo: 1 };
+    return (orden[b.prioridad] || 0) - (orden[a.prioridad] || 0);
+  });
+}
+
+/**
+ * Menú: Actualizar proyectos de ley
+ */
+function actualizarProyectosLey() {
+  var ui = SpreadsheetApp.getUi();
+  ui.alert('Extrayendo proyectos de ley desde Transparentes.cl...');
+  
+  var result = scrapeTransparentes();
+  
+  if (result.error) {
+    ui.alert('Error: ' + result.error);
+    return;
+  }
+  
+  var nuevos = guardarProyectosLey(result.proyectos);
+  ui.alert('Listo! ' + result.total + ' proyectos encontrados, ' + nuevos + ' nuevos agregados.');
+}
+
+/**
+ * Obtiene proyectos próximos a votación (alta prioridad)
+ */
+function getProximasVotaciones() {
+  var proyectos = getProyectosLey(false);
+  return proyectos.filter(function(p) { return p.prioridad === 'alto'; }).slice(0, 5);
+}
+
+/**
+ * API endpoint para proyectos de ley
+ */
+function apiProyectosLey(e) {
+  var action = e ? e.parameter.subaction : '';
+  
+  switch(action) {
+    case 'proximas':
+      return getProximasVotaciones();
+    case 'refresh':
+      var result = scrapeTransparentes();
+      guardarProyectosLey(result.proyectos);
+      return result;
+    default:
+      return getProyectosLey(false);
+  }
+}
+
+/**
+ * Menú: Ver próximas votaciones en un diálogo
+ */
+function verProximasVotaciones() {
+  var ui = SpreadsheetApp.getUi();
+  var proyectos = getProximasVotaciones();
+  
+  if (proyectos.length === 0) {
+    ui.alert('No hay votaciones próximas de alta prioridad.\nPrueba actualizar los proyectos primero.');
+    return;
+  }
+  
+  var mensaje = '📋 PRÓXIMAS VOTACIONES (Alta Prioridad)\n\n';
+  proyectos.forEach(function(p, i) {
+    mensaje += (i + 1) + '. ' + p.boletin + '\n';
+    mensaje += '   ' + p.titulo.substring(0, 80) + '...\n';
+    mensaje += '   📁 Tema: ' + p.tema + ' | 🎯 Impacto: ' + p.impactoCiudadania + '\n\n';
+  });
+  
+  ui.alert(mensaje);
+}
+
+// ============================================
+// INTEGRACIÓN DECIDECHILE - DATOS ELECTORALES
+// ============================================
+
+var DECIDECHILE_BASE = 'https://www.decidechile.cl';
+
+/**
+ * Estructura de datos electorales para un diputado
+ * Fuente: DecideChile proporciona datos electorales históricos
+ */
+function getDatosElectorales(nombreDiputado) {
+  // Buscar en hoja de datos electorales
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Datos_Electorales');
+  
+  if (!sheet || sheet.getLastRow() <= 1) {
+    return null;
+  }
+  
+  var data = sheet.getDataRange().getValues();
+  data.shift(); // Remover headers
+  
+  var diputado = data.find(function(row) {
+    return row[1] && row[1].toLowerCase().indexOf(nombreDiputado.toLowerCase()) >= 0;
+  });
+  
+  if (!diputado) return null;
+  
+  return {
+    nombre: diputado[1],
+    distrito: diputado[2],
+    region: diputado[3],
+    elecciones: diputado[4],
+    primeraEleccion: diputado[5],
+    votosUltimaEleccion: diputado[6],
+    porcentajeVotos: diputado[7],
+    tendencia: diputado[8],
+    fuente: 'decidechile.cl'
+  };
+}
+
+/**
+ * Crear estructura para datos electorales
+ */
+function setupDatosElectorales() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Datos_Electorales');
+  
+  if (!sheet) {
+    sheet = ss.insertSheet('Datos_Electorales');
+    var headers = ['ID', 'Nombre', 'Distrito', 'Región', 'Elecciones', 'Primera Elección', 'Votos Última', 'Porcentaje', 'Tendencia'];
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    sheet.getRange(1, 1, 1, headers.length).setBackground('#0d47a1').setFontColor('#fff').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  
+  return sheet;
+}
+
+/**
+ * Importar datos electorales desde DecideChile manualmente
+ * (Para ser llenado con datos recopilados)
+ */
+function importarDatosElectoralesMuestra() {
+  var sheet = setupDatosElectorales();
+  
+  // Datos de muestra basados en DecideChile
+  var datosEjemplo = [
+    [1, 'Karol Cariola', 'D8', 'Metropolitana', 3, 2013, 45678, 28.5, 'ascendente'],
+    [2, 'Diego Schalper', 'D10', 'O\'Higgins', 2, 2017, 38234, 24.3, 'estable'],
+    [3, 'Johannes Kaiser', 'D11', 'Metropolitana', 1, 2021, 52145, 31.2, 'nuevo'],
+    [4, 'Pamela Jiles', 'D12', 'Metropolitana', 2, 2017, 67890, 35.6, 'ascendente'],
+    [5, 'Gonzalo de la Carrera', 'D13', 'Metropolitana', 1, 2021, 41234, 22.8, 'nuevo'],
+  ];
+  
+  if (sheet.getLastRow() <= 1) {
+    datosEjemplo.forEach(function(row) {
+      sheet.appendRow(row);
+    });
+    SpreadsheetApp.getUi().alert('Datos electorales de ejemplo importados');
+  } else {
+    SpreadsheetApp.getUi().alert('Ya existen datos en la hoja Datos_Electorales');
+  }
+}
+
+/**
+ * Obtener estadísticas electorales agregadas
+ */
+function getEstadisticasElectorales() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('Datos_Electorales');
+  
+  if (!sheet || sheet.getLastRow() <= 1) {
+    return { error: 'No hay datos electorales', stats: null };
+  }
+  
+  var data = sheet.getDataRange().getValues();
+  data.shift();
+  
+  var stats = {
+    totalConDatos: data.length,
+    promedioElecciones: 0,
+    nuevos2021: 0,
+    reelectos: 0,
+    tendencias: { ascendente: 0, estable: 0, descendente: 0, nuevo: 0 }
+  };
+  
+  var sumaElecciones = 0;
+  data.forEach(function(row) {
+    sumaElecciones += row[4] || 0;
+    if (row[4] === 1) stats.nuevos2021++;
+    else stats.reelectos++;
+    if (row[8] && stats.tendencias[row[8]] !== undefined) {
+      stats.tendencias[row[8]]++;
+    }
+  });
+  
+  stats.promedioElecciones = (sumaElecciones / data.length).toFixed(1);
+  
+  return stats;
+}
+
+/**
+ * API endpoint para datos electorales
+ */
+function apiDatosElectorales(e) {
+  var action = e ? e.parameter.subaction : '';
+  
+  switch(action) {
+    case 'stats':
+      return getEstadisticasElectorales();
+    case 'diputado':
+      var nombre = e.parameter.nombre || '';
+      return getDatosElectorales(nombre);
+    default:
+      return getEstadisticasElectorales();
+  }
+}
+

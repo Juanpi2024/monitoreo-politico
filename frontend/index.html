@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Civic Watchdog - Monitoreo Político</title>
+  <meta name="description"
+    content="Sistema de monitoreo legislativo y análisis político para la Cámara de Diputados de Chile">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/src/styles/index.css">
+</head>
+
+<body>
+  <div id="app">
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="#" class="navbar-brand">
+          <div class="brand-icon">
+            <i class="fas fa-eye"></i>
+          </div>
+          <span class="brand-text">Civic<span class="brand-accent">Watchdog</span></span>
+        </a>
+
+        <div class="navbar-search">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Buscar diputado, partido..." autocomplete="off">
+        </div>
+
+        <div class="navbar-actions">
+          <button class="btn-icon" id="themeToggle" title="Cambiar tema">
+            <i class="fas fa-moon"></i>
+          </button>
+          <button class="btn-icon" id="refreshData" title="Actualizar datos">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Hero Stats Section -->
+      <section class="stats-section">
+        <div class="stats-grid" id="statsGrid">
+          <!-- Stats cards loaded dynamically -->
+        </div>
+      </section>
+
+      <!-- Filters -->
+      <section class="filters-section">
+        <div class="filters-container">
+          <div class="filter-group">
+            <label>Partido</label>
+            <select id="filterPartido">
+              <option value="">Todos los partidos</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Nivel de Alerta</label>
+            <select id="filterAlerta">
+              <option value="">Todos</option>
+              <option value="high">🔴 Alta (7-10)</option>
+              <option value="medium">🟡 Media (4-6)</option>
+              <option value="low">🟢 Baja (0-3)</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Ordenar por</label>
+            <select id="sortBy">
+              <option value="alert">Nivel de alerta</option>
+              <option value="name">Nombre</option>
+              <option value="party">Partido</option>
+              <option value="attendance">Asistencia</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Grid -->
+      <section class="content-section">
+        <div class="content-layout">
+          <!-- Deputies Grid -->
+          <div class="deputies-section">
+            <div class="section-header">
+              <h2><i class="fas fa-users"></i> Diputados</h2>
+              <span class="badge" id="deputiesCount">0</span>
+            </div>
+            <div class="deputies-grid" id="deputiesGrid">
+              <!-- Deputy cards loaded dynamically -->
+            </div>
+          </div>
+
+          <!-- Sidebar -->
+          <aside class="sidebar">
+            <!-- Top Alerts -->
+            <div class="sidebar-card glass">
+              <h3><i class="fas fa-exclamation-triangle"></i> Top Alertas</h3>
+              <div class="alerts-list" id="alertsList">
+                <!-- Alerts loaded dynamically -->
+              </div>
+            </div>
+
+            <!-- Upcoming Votes - Legislative Tracking -->
+            <div class="sidebar-card glass">
+              <h3><i class="fas fa-gavel"></i> Próximas Votaciones</h3>
+              <div class="projects-list" id="projectsList">
+                <!-- Projects loaded dynamically -->
+              </div>
+            </div>
+
+            <!-- Party Stats -->
+            <div class="sidebar-card glass">
+              <h3><i class="fas fa-chart-pie"></i> Por Partido</h3>
+              <div class="party-list" id="partyList">
+                <!-- Party stats loaded dynamically -->
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <!-- Deputy Modal -->
+    <div class="modal-overlay" id="deputyModal">
+      <div class="modal glass">
+        <div class="modal-header">
+          <h2 id="modalTitle">Perfil del Diputado</h2>
+          <button class="modal-close" id="modalClose">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body" id="modalBody">
+          <!-- Modal content loaded dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Cargando datos...</p>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
